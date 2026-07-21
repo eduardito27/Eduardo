@@ -1,24 +1,21 @@
-# 1. Construir el Frontend (React)
-FROM node:18 AS build-client
-WORKDIR /app/client
-# Copiamos los archivos de configuración desde la raíz/client
-COPY client/package*.json ./
-RUN npm install
-COPY client/ ./
-RUN npm run build
-
-# 2. Configurar el Servidor (Node.js)
 FROM node:18
+
+# Establecemos la carpeta de trabajo
 WORKDIR /app
-# Copiamos archivos del servidor
-COPY server/package*.json ./server/
-RUN cd server && npm install
-COPY server/ ./server/
 
-# 3. Copiar el frontend construido al servidor
-# Nota: Verifica si tu React genera la carpeta 'build' o 'dist'
-COPY --from=build-client /app/client/build ./server/public
+# Copiamos TODOS los archivos de un golpe para que no diga que no existen
+COPY . .
 
+# Instalamos dependencias del frontend y lo construimos
+# Usamos la ruta completa para no fallar
+RUN npm install --prefix client
+RUN npm run build --prefix client
+
+# Instalamos dependencias del backend
+RUN npm install --prefix server
+
+# Exponemos el puerto
 EXPOSE 3000
-# Comando para arrancar
+
+# Arrancamos el servidor
 CMD ["node", "server/index.js"]
